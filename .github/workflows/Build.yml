@@ -1,5 +1,8 @@
 name: Armbian Compile and Release
 on:
+  create:
+    tags:
+      - v*
   workflow_dispatch:
 
 env:
