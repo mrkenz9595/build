@@ -44,7 +44,8 @@ jobs:
         id: get-filename
         run: echo "filename=$(basename $(ls output/images/*.img.xz) .img.xz)" >> $GITHUB_OUTPUT
       - name: Release
-        uses: ncipollo/release-action@v1
+        id: create_release
+        uses: ncipollo/release-action@main
         with:
           prerelease: true
           allowUpdates: true
