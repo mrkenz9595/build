@@ -1,120 +1,57 @@
-name: "Rebuild Armbian"
-
+name: Armbian Compile and Release
 on:
+  push:
+    tags:
+      - "*"
   workflow_dispatch:
-    inputs:
-      armbian_runner_clean:
-        description: "Make space on GitHub runners"
-        required: false
-      armbian_pgp_key:
-        description: "Armbian PGP key"
-        required: false
-
+env:
+  RELEASE_BRANCH: "current"
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
 jobs:
   build:
+    name: "Build Armbian"
     runs-on: ubuntu-latest
-
     steps:
-      - name: Free GitHub Runner
-        if: ${{ github.event.inputs.armbian_runner_clean != '' }}
-        uses: descriptinc/free-disk-space@main
-        with:
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: true
-
-      - name: Import GPG key
-        if: ${{ github.event.inputs.armbian_pgp_key != '' }}
-        uses: crazy-max/ghaction-import-gpg@v6
-        with:
-          gpg_private_key: ${{ github.event.inputs.armbian_pgp_key }}
-          passphrase: ${{ secrets.ARM_PGP_PASSWORD }}
-
-      - name: Checkout Armbian OS
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          repository: armbian/os
-          path: os
-
-      - name: Checkout Armbian build framework
-        uses: actions/checkout@v4
-        with:
-          repository: armbian/build
-          path: build
-
-      - name: Checkout customizations
-        uses: actions/checkout@v4
-        with:
-          path: custom
-
-      - name: Set ARMBIAN_VERSION
+          fetch-depth: 0
+      - name: Set up build environment
         run: |
-          cat os/stable.json | jq -r '.version' > $GITHUB_ENV
-          if [[ -n "${{ github.event.inputs.armbian_version }}" ]]; then
-            echo "ARMBIAN_VERSION=${{ github.event.inputs.armbian_version }}" >> $GITHUB_ENV
-          fi
-
-      - name: Copy userpatches and custom
+          sudo apt-get update
+          sudo apt-get install -y dialog
+      - name: Compile
         run: |
-          mkdir -p build/userpatches
-          rsync -av os/userpatches/. build/userpatches/
-          [[ -d custom/userpatches ]] && rsync -av custom/userpatches/. build/userpatches/
-
-      - name: Build Armbian
-        run: |
-          cd build
-          git checkout ${{ github.event.inputs.armbian_branch }}
-
-          if [[ "${{ github.event.inputs.armbian_ui }}" == minimal ]]; then
-            BUILD_DESKTOP="no"
-            BUILD_MINIMAL="yes"
-          elif [[ "${{ github.event.inputs.armbian_ui }}" == server ]]; then
-            BUILD_DESKTOP="no"
-            BUILD_MINIMAL="no"
-          else
-            BUILD_DESKTOP="yes"
-            BUILD_MINIMAL="no"
-            DESKTOP_ENVIRONMENT="${{ github.event.inputs.armbian_ui }}"
-            DESKTOP_APPGROUPS_SELECTED=""
-            DESKTOP_ENVIRONMENT_CONFIG_NAME="config_base"
-          fi
-
-          ./compile.sh "${{ github.event.inputs.armbian_target }}" \
-            REVISION="${{ env.ARMBIAN_VERSION }}" \
-            BOARD="${{ github.event.inputs.armbian_board }}" \
-            BRANCH="${{ github.event.inputs.armbian_kernel_branch }}" \
-            RELEASE="${{ github.event.inputs.armbian_release }}" \
-            KERNEL_CONFIGURE="no" \
-            BUILD_DESKTOP="${BUILD_DESKTOP}" \
-            BUILD_MINIMAL="${BUILD_MINIMAL}" \
-            DESKTOP_ENVIRONMENT="${DESKTOP_ENVIRONMENT}" \
-            DESKTOP_APPGROUPS_SELECTED="${DESKTOP_APPGROUPS_SELECTED}" \
-            DESKTOP_ENVIRONMENT_CONFIG_NAME="${DESKTOP_ENVIRONMENT_CONFIG_NAME}" \
-            ENABLE_EXTENSIONS="${{ github.event.inputs.armbian_extensions }}" \
-            COMPRESS_OUTPUTIMAGE="${{ github.event.inputs.armbian_compress }}" \
-            SHARE_LOG="yes" \
-            EXPERT="yes"
-
-      - name: Sign artifacts
-        if: ${{ github.event.inputs.armbian_pgp_key != '' }}
-        run: |
-          echo "${{ secrets.ARM_PGP_PASSWORD }}" | \
-          gpg --passphrase-fd 0 --armor --detach-sign --pinentry-mode loopback --batch --yes \
-          build/output/images/*.img*.xz
-
-      - name: Create GitHub Release
+         export DESKTOP_ENVIRONMENT="xfce"
+          ./compile.sh \
+            BOARD=rk3318-box \
+            BRANCH=${{ env.RELEASE_BRANCH }} \
+            RELEASE=jammy \
+            BSPFREEZE=yes \
+            BUILD_MINIMAL=no \
+            BUILD_DESKTOP=yes \
+            DESKTOP_ENVIRONMENT=xfce \
+            DESKTOP_ENVIRONMENT_CONFIG_NAME=config_base \
+            DESKTOP_APPGROUPS_SELECTED="browsers, desktop_tools, editor, internet, multimedia, programming" \
+            KERNEL_CONFIGURE=no \
+            EXTRAWIFI=yes \
+            INSTALL_HEADERS=yes \
+            VENDOR=Armbian \
+            COMPRESS_OUTPUTIMAGE=xz
+      - name: Get image filename
+        id: get-filename
+        run: echo "filename=$(basename $(ls output/images/*.img.xz) .img.xz)" >> $GITHUB_OUTPUT
+      - name: Release
         uses: ncipollo/release-action@v1
         with:
-          tag: "${{ env.ARMBIAN_VERSION }}"
-          name: "${{ github.event.inputs.armbian_release_title }}"
-          artifacts: "${{ github.event.inputs.armbian_artifacts }}*"
+          prerelease: true
           allowUpdates: true
-          removeArtifacts: false
-          replacesArtifacts: true
-          makeLatest: true
-          token: "${{ secrets.GITHUB_TOKEN }}"
+          name: ${{ github.ref_name }}-${{ steps.get-filename.outputs.filename }}
+          artifacts: output/images/${{ steps.get-filename.outputs.filename }}.img.xz, output/images/${{ steps.get-filename.outputs.filename }}.img.txt
           body: |
-            ${{ github.event.inputs.armbian_release_body }}
+            This is a release version of the base image, compiled by GitHub Actions.
+            Configured to boot on v1.0 boards only.
+            Mind that this image is empty and should be used as a base for further customization.
+            For more details, please see the logs [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
