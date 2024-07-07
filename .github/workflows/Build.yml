@@ -31,12 +31,12 @@ jobs:
         run: |
          export DESKTOP_ENVIRONMENT="xfce"
           ./compile.sh \
-            BOARD=rk3318-box \
+            BOARD=orangepipcplus \
             BRANCH=${{ env.RELEASE_BRANCH }} \
             RELEASE=jammy \
             BSPFREEZE=yes \
             BUILD_MINIMAL=no \
-            BUILD_DESKTOP=yes \
+            BUILD_DESKTOP=no \
             KERNEL_CONFIGURE=no \
             EXTRAWIFI=yes \
             INSTALL_HEADERS=yes \
