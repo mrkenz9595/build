@@ -27,9 +27,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y dialog
-          export DESKTOP_ENVIRONMENT="xfce"
       - name: Compile
         run: |
+         export DESKTOP_ENVIRONMENT="xfce"
           ./compile.sh \
             BOARD=rk3318-box \
             BRANCH=${{ env.RELEASE_BRANCH }} \
