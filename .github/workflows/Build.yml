@@ -36,11 +36,9 @@ jobs:
       - name: Get image filename
         id: get-filename
         run: echo "filename=$(basename $(ls output/images/*.img.xz) .img.xz)" >> $GITHUB_OUTPUT
-      - name: Release
-        id: create_release
-        uses: ncipollo/release-action@main
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
         with:
-          prerelease: true
-          allowUpdates: true
           name: ${{ github.ref_name }}-${{ steps.get-filename.outputs.filename }}
-          artifacts: output/images/${{ steps.get-filename.outputs.filename }}.img.xz, output/images/${{ steps.get-filename.outputs.filename }}.img.txt
+          path: output/images/${{ steps.get-filename.outputs.filename }}.img.xz
+          retention-days: 5
