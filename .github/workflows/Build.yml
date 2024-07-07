@@ -22,7 +22,7 @@ jobs:
             BOARD=rk3318-box \
             BRANCH=${{ env.RELEASE_BRANCH }} \
             RELEASE=jammy \
-            BSPFREEZE=no \
+            BSPFREEZE=yes \
             BUILD_MINIMAL=no \
             BUILD_DESKTOP=yes \
             DESKTOP_ENVIRONMENT=xfce \
