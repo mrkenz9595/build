@@ -1,8 +1,8 @@
 name: Armbian Compile and Release
 on:
-  create:
+  push:
     tags:
-      - v*
+      - "*"
   workflow_dispatch:
 
 env:
@@ -31,11 +31,11 @@ jobs:
             RELEASE=jammy \
             BSPFREEZE=yes \
             BUILD_MINIMAL=no \
-            BUILD_DESKTOP=no \
+            BUILD_DESKTOP=yes \
             KERNEL_CONFIGURE=no \
             EXTRAWIFI=yes \
             INSTALL_HEADERS=yes \
-            VENDOR=OpenNept4une \
+            VENDOR=TDG \
             COMPRESS_OUTPUTIMAGE=xz
 
       - name: Get image filename
