@@ -22,7 +22,6 @@ jobs:
             BOARD=rk3318-box \
             BRANCH=${{ env.RELEASE_BRANCH }} \
             RELEASE=jammy \
-            BSPFREEZE=yes \
             BUILD_MINIMAL=no \
             BUILD_DESKTOP=yes \
             DESKTOP_ENVIRONMENT=xfce \
@@ -31,7 +30,6 @@ jobs:
             KERNEL_CONFIGURE=no \
             EXTRAWIFI=yes \
             INSTALL_HEADERS=yes \
-            VENDOR=Armbian \
             COMPRESS_OUTPUTIMAGE=xz
       - name: Get image filename
         id: get-filename
