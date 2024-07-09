@@ -17,7 +17,6 @@ jobs:
           fetch-depth: 0
       - name: Compile
         run: |
-         git checkout tags/v24.2.1
           ./compile.sh \
             BOARD=rk3318-box \
             BRANCH=${{ env.RELEASE_BRANCH }} \
