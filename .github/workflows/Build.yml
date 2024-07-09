@@ -12,12 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: armbian/build@v24.2.1
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Compile
         run: |
-         export DESKTOP_ENVIRONMENT="xfce"
+         git checkout tags/v24.2.1
           ./compile.sh \
             BOARD=rk3318-box \
             BRANCH=${{ env.RELEASE_BRANCH }} \
