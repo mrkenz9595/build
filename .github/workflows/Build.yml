@@ -20,7 +20,7 @@ jobs:
           ./compile.sh \
             BOARD=orangepipcplus \
             BRANCH=${{ env.RELEASE_BRANCH }} \
-            RELEASE=jammy \
+            RELEASE=bookworm \
             BUILD_MINIMAL=no \
             BUILD_DESKTOP=yes \
             DESKTOP_ENVIRONMENT=xfce \
