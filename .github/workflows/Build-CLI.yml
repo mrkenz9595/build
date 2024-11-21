@@ -21,7 +21,8 @@ jobs:
             BOARD=rk322x-box \
             BRANCH=${{ env.RELEASE_BRANCH }} \
             RELEASE=bookworm \
-            BUILD_MINIMAL=no \
+            BUILD_MINIMAL=yes \
+            BUILD_DESKTOP=no \
             KERNEL_CONFIGURE=no \
             EXTRAWIFI=yes \
             INSTALL_HEADERS=yes \
