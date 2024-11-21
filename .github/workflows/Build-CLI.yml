@@ -1,0 +1,37 @@
+name: Armbian Compile Server and Release
+on:
+  workflow_dispatch:
+env:
+  RELEASE_BRANCH: "current"
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  build:
+    name: "Build Armbian"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Compile
+        run: |
+          ./compile.sh \
+            BOARD=rk322x-box \
+            BRANCH=${{ env.RELEASE_BRANCH }} \
+            RELEASE=bookworm \
+            BUILD_MINIMAL=no \
+            KERNEL_CONFIGURE=no \
+            EXTRAWIFI=yes \
+            INSTALL_HEADERS=yes \
+            COMPRESS_OUTPUTIMAGE=xz
+      - name: Get image filename
+        id: get-filename
+        run: echo "filename=$(basename $(ls output/images/*.img.xz) .img.xz)" >> $GITHUB_OUTPUT
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ github.ref_name }}-${{ steps.get-filename.outputs.filename }}
+          path: output/images/${{ steps.get-filename.outputs.filename }}.img.xz
+          retention-days: 5
